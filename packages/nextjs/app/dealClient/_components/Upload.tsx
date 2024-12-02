@@ -2,12 +2,10 @@ import { CarWriter } from '@ipld/car';
 import { CID } from 'multiformats/cid';
 import { sha256 } from 'multiformats/hashes/sha2';
 
-import fs from "fs";
-
 export const GetFileDealParams = ({
   dealDurationInMonths,
 }: {
-  handleGetDealParams: (params: DealInfoData) => void;
+  handleGetDealParams: (params: string) => void;
   dealDurationInMonths: number;
 }) => {
 
@@ -48,20 +46,11 @@ async function convertToCAR(file: File) {
 
     const carChunks = [];
     for await (const chunk of out) {
+      console.log("chunk", chunk);
       carChunks.push(chunk);
     }
 
     const carBlob = new Blob(carChunks, { type: "application/car" });
-
-    const buffer = Buffer.from(await carBlob.arrayBuffer());
-
-    console.log("Writing CAR file to disk...");
-    fs.writeFileSync("car.car", buffer);
-
-    console.log("Uploading to IPFS...");
-    const ipfsLink = await uploadToIPFS(carBlob);
-
-    console.log("ipfsLink", ipfsLink);
 
     return carBlob;
   } catch (error) {
@@ -86,34 +75,35 @@ async function generateCID(content: Uint8Array) {
 }
 
 async function uploadToIPFS(carBlob: Blob) {
-  try {
-    const data = new FormData();
-    data.append("file", carBlob, "file.car");
+  // TODO: Not implemented
+  // try {
+  //   const data = new FormData();
+  //   data.append("file", carBlob, "file.car");
 
-    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.PINATA_API_KEY}`,
-        "Content-Type": "multipart/form-data",
-      },
-      body: data,
-    });
+  //   const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+  //     method: "POST",
+  //     headers: {
+  //       Authorization: `Bearer ${process.env.PINATA_API_KEY}`,
+  //       "Content-Type": "multipart/form-data",
+  //     },
+  //     body: data,
+  //   });
 
-    console.log("res", res);
+  //   console.log("res", res);
 
-    if (!res.ok) {
-      throw new Error(`Failed to upload to IPFS: ${res.statusText}`);
-    }
+  //   if (!res.ok) {
+  //     throw new Error(`Failed to upload to IPFS: ${res.statusText}`);
+  //   }
 
-    const resData = await res.json();
+  //   const resData = await res.json();
 
-    if ("IpfsHash" in resData) {
-      return `ipfs://${resData.IpfsHash}`;
-    }
+  //   if ("IpfsHash" in resData) {
+  //     return `ipfs://${resData.IpfsHash}`;
+  //   }
 
-    throw new Error(`No IPFS hash found in response: ${JSON.stringify(resData)}`);
-  } catch (error) {
-    console.error("Error uploading to IPFS:", error);
-    throw error;
-  }
+  //   throw new Error(`No IPFS hash found in response: ${JSON.stringify(resData)}`);
+  // } catch (error) {
+  //   console.error("Error uploading to IPFS:", error);
+  //   throw error;
+  // }
 }
