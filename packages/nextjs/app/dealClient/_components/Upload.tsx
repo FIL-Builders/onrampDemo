@@ -1,17 +1,14 @@
-import { CarWriter } from '@ipld/car';
-import { CID } from 'multiformats/cid';
-import { sha256 } from 'multiformats/hashes/sha2';
+import uploadToIPFS from "./Pinata";
+import { CarWriter } from "@ipld/car";
+import { CommP } from "@web3-storage/data-segment";
+import { CID } from "multiformats/cid";
+import { sha256 } from "multiformats/hashes/sha2";
 
-export const GetFileDealParams = ({
-  dealDurationInMonths,
-}: {
-  handleGetDealParams: (params: string) => void;
-  dealDurationInMonths: number;
-}) => {
-
+export const GetFileDealParams = () => {
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log("file", file);
       const carFile = await convertToCAR(file);
       event.target.value = "";
       return carFile;
@@ -37,22 +34,23 @@ async function convertToCAR(file: File) {
     const fileContent = new Uint8Array(arrayBuffer);
 
     const cid = await generateCID(fileContent);
+    const commP = await generateCommP(fileContent);
+    const pieceSize = commP.pieceSize;
 
     const { writer, out } = CarWriter.create([cid]);
 
     // Write the file content to the CAR writer
-    await writer.put({ cid, bytes: fileContent });
-    await writer.close();
+    writer.put({ cid, bytes: fileContent });
+    writer.close();
 
-    const carChunks = [];
+    const carChunks: Uint8Array[] = [];
     for await (const chunk of out) {
-      console.log("chunk", chunk);
       carChunks.push(chunk);
     }
 
-    const carBlob = new Blob(carChunks, { type: "application/car" });
+    const ipfsUrl = await uploadToIPFS(carChunks);
 
-    return carBlob;
+    return { pieceSize, cid, commP, ipfsUrl };
   } catch (error) {
     console.error("Error creating CAR file:", error);
     throw error;
@@ -74,36 +72,7 @@ async function generateCID(content: Uint8Array) {
   return CID.createV1(0x55, hash);
 }
 
-async function uploadToIPFS(carBlob: Blob) {
-  // TODO: Not implemented
-  // try {
-  //   const data = new FormData();
-  //   data.append("file", carBlob, "file.car");
-
-  //   const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-  //     method: "POST",
-  //     headers: {
-  //       Authorization: `Bearer ${process.env.PINATA_API_KEY}`,
-  //       "Content-Type": "multipart/form-data",
-  //     },
-  //     body: data,
-  //   });
-
-  //   console.log("res", res);
-
-  //   if (!res.ok) {
-  //     throw new Error(`Failed to upload to IPFS: ${res.statusText}`);
-  //   }
-
-  //   const resData = await res.json();
-
-  //   if ("IpfsHash" in resData) {
-  //     return `ipfs://${resData.IpfsHash}`;
-  //   }
-
-  //   throw new Error(`No IPFS hash found in response: ${JSON.stringify(resData)}`);
-  // } catch (error) {
-  //   console.error("Error uploading to IPFS:", error);
-  //   throw error;
-  // }
+async function generateCommP(bytes: Uint8Array) {
+  const commP = await CommP.build(bytes);
+  return commP;
 }

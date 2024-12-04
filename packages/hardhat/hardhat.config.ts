@@ -1,7 +1,6 @@
 import "./tasks";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-ethers";
-import "@nomicfoundation/hardhat-foundry";
 import "@nomicfoundation/hardhat-verify";
 import "@typechain/hardhat";
 import { config as dotenvConfig } from "dotenv";
@@ -82,6 +81,12 @@ const config: HardhatUserConfig = {
   },
   sourcify: {
     enabled: false,
+  },
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts",
   },
 };
 

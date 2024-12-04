@@ -37,3 +37,7 @@ yarn-error.log*
 *.tsbuildinfo
 
 uploads
+
+# contract artifacts
+artifacts
+typechain-types
