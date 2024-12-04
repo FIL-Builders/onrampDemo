@@ -33,3 +33,7 @@ out/
 
 # Dotenv file
 .env
+
+# contract artifacts
+artifacts
+typechain-types

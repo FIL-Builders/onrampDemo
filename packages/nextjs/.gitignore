@@ -38,6 +38,3 @@ yarn-error.log*
 
 uploads
 
-# contract artifacts
-artifacts
-typechain-types
