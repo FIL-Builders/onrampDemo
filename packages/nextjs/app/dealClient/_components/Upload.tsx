@@ -1,12 +1,12 @@
 import { useState } from "react";
+import { onRampContractAbi } from "~~/contracts/generated";
 import uploadToIPFS from "./Pinata";
 import { CarWriter } from "@ipld/car";
 import { CommP } from "@web3-storage/data-segment";
 import { CID } from "multiformats/cid";
 import { sha256 } from "multiformats/hashes/sha2";
-
-import { onRampContractAbi } from "~~/contracts/deployedContracts";
 import { useWriteContract } from "wagmi";
+
 
 const PROVER_CONTRACT_ADDRESS_DEST_CHAIN = "0x61f0ace5ad40466eb43141fa56cf87758b6ffba8";
 const ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN = "0x750cbacfbe58c453cea1e5a2617193d60b7cb451";
@@ -34,12 +34,13 @@ export const GetFileDealParams = () => {
     }
   };
 
-  const { writeContractAsync } = useWriteContract({
-    abi: onRampContractAbi,
-    functionName: "offerData",
-  });
+  const { writeContract } = useWriteContract();
 
   const handleSubmit = async () => {
+    console.log("pieceSize", pieceSize);
+    console.log("commP", commP);
+    console.log("ipfsUrl", ipfsUrl);
+    console.log("cid", cid);
     if (!pieceSize || !commP || !ipfsUrl) {
       console.error("Missing required data for the offer");
       return;
@@ -53,10 +54,8 @@ export const GetFileDealParams = () => {
       token: WETH_ADDRESS as `0x${string}`,
     };
 
-    console.log("Encoded Offer:", offer);
-
     try {
-      const transaction = await writeContractAsync({
+      const transaction = writeContract({
         address: ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN,
         abi: onRampContractAbi,
         functionName: "offerData",
