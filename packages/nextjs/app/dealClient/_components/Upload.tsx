@@ -1,17 +1,70 @@
+import { useState } from "react";
 import uploadToIPFS from "./Pinata";
 import { CarWriter } from "@ipld/car";
 import { CommP } from "@web3-storage/data-segment";
 import { CID } from "multiformats/cid";
 import { sha256 } from "multiformats/hashes/sha2";
 
+import { onRampContractAbi } from "~~/contracts/deployedContracts";
+import { useWriteContract } from "wagmi";
+
+const PROVER_CONTRACT_ADDRESS_DEST_CHAIN = "0x61f0ace5ad40466eb43141fa56cf87758b6ffba8";
+const ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN = "0x750cbacfbe58c453cea1e5a2617193d60b7cb451";
+const ORACLE_CONTRACT_ADDRESS_SRC_CHAIN = "0x8ca5ea3387fff4200cb47b5025fef76f32d553c0";
+const WETH_ADDRESS = "0xb44cc5FB8CfEdE63ce1758CE0CDe0958A7702a16";
+
 export const GetFileDealParams = () => {
+  const [pieceSize, setPieceSize] = useState<number | null>(null);
+  const [cid, setCid] = useState<CID | null>(null);
+  const [commP, setCommP] = useState<any | null>(null);
+  const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
+
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       console.log("file", file);
       const carFile = await convertToCAR(file);
       event.target.value = "";
+      setPieceSize(carFile.pieceSize);
+      setCid(carFile.cid);
+      setCommP(carFile.commP);
+      setIpfsUrl(carFile.ipfsUrl);
+
       return carFile;
+    }
+  };
+
+  const { writeContractAsync } = useWriteContract({
+    abi: onRampContractAbi,
+    functionName: "offerData",
+  });
+
+  const handleSubmit = async () => {
+    if (!pieceSize || !commP || !ipfsUrl) {
+      console.error("Missing required data for the offer");
+      return;
+    }
+
+    const offer = {
+      commP: commP.bytes as `0x${string}`,
+      size: BigInt(pieceSize),
+      location: ipfsUrl,
+      amount: BigInt(0),
+      token: WETH_ADDRESS as `0x${string}`,
+    };
+
+    console.log("Encoded Offer:", offer);
+
+    try {
+      const transaction = await writeContractAsync({
+        address: ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN,
+        abi: onRampContractAbi,
+        functionName: "offerData",
+        args: [offer],
+      });
+      console.log("Transaction sent:", transaction);
+    } catch (error) {
+      console.error("Error sending transaction:", error);
     }
   };
 
@@ -24,6 +77,7 @@ export const GetFileDealParams = () => {
         accept={"*"}
         className="file-input border-base-300 border shadow-md shadow-secondary rounded-3xl"
       />
+      <button onClick={handleSubmit}>Submit</button>
     </>
   );
 };
