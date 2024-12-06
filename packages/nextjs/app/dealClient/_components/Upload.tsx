@@ -5,8 +5,9 @@ import { CommP, MerkleTree } from "@web3-storage/data-segment";
 import { ethers } from "ethers";
 import { CID } from "multiformats/cid";
 import { sha256 } from "multiformats/hashes/sha2";
-import { useWriteContract } from "wagmi";
+import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { onRampContractAbi } from "~~/contracts/generated";
+
 
 const ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN = "0x750cbacfbe58c453cea1e5a2617193d60b7cb451";
 const WETH_ADDRESS = "0xb44cc5FB8CfEdE63ce1758CE0CDe0958A7702a16";
@@ -29,7 +30,10 @@ export const GetFileDealParams = () => {
     }
   };
 
-  const { writeContract } = useWriteContract();
+  const { data: hash, isPending, writeContract } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   const handleSubmit = async () => {
     if (!pieceSize || !commP || !ipfsUrl) {
@@ -76,6 +80,10 @@ export const GetFileDealParams = () => {
         className="file-input border-base-300 border shadow-md shadow-secondary rounded-3xl"
       />
       <button onClick={handleSubmit}>Submit</button>
+      {isPending && <div>Transaction pending...</div>}
+      {isConfirming && <div>Confirming transaction...</div>}
+      {isConfirmed && <div>Transaction confirmed!</div>}
+      {hash && <div>Transaction hash: {hash}</div>}
     </>
   );
 };
