@@ -27,6 +27,7 @@
     "burner-connector": "^0.0.8",
     "cids": "^1.1.9",
     "daisyui": "4.12.10",
+    "ethers": "5.7.2",
     "ipfs-car": "^1.2.0",
     "multiformats": "^13.3.1",
     "next": "^14.2.11",

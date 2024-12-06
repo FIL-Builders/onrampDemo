@@ -53,7 +53,7 @@ export const getUserAPIKey = async (address: Hex, walletClient: WalletClient) =>
       localStorage.setItem(`lighthouse-api-key-${addressLowerCase}`, apiKey);
     } catch (e) {
       notification.error("Error signing in to Lighthouse");
-      throw new Error("Error signing in to Lighthouse");
+      throw new Error("Error signing in to Lighthouse, error: " + e);
     }
   }
   return apiKey;

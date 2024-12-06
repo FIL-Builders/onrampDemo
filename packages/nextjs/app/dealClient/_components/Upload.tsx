@@ -1,21 +1,18 @@
 import { useState } from "react";
-import { onRampContractAbi } from "~~/contracts/generated";
 import uploadToIPFS from "./Pinata";
 import { CarWriter } from "@ipld/car";
-import { CommP } from "@web3-storage/data-segment";
+import { CommP, MerkleTree } from "@web3-storage/data-segment";
+import { ethers } from "ethers";
 import { CID } from "multiformats/cid";
 import { sha256 } from "multiformats/hashes/sha2";
 import { useWriteContract } from "wagmi";
+import { onRampContractAbi } from "~~/contracts/generated";
 
-
-const PROVER_CONTRACT_ADDRESS_DEST_CHAIN = "0x61f0ace5ad40466eb43141fa56cf87758b6ffba8";
 const ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN = "0x750cbacfbe58c453cea1e5a2617193d60b7cb451";
-const ORACLE_CONTRACT_ADDRESS_SRC_CHAIN = "0x8ca5ea3387fff4200cb47b5025fef76f32d553c0";
 const WETH_ADDRESS = "0xb44cc5FB8CfEdE63ce1758CE0CDe0958A7702a16";
 
 export const GetFileDealParams = () => {
   const [pieceSize, setPieceSize] = useState<number | null>(null);
-  const [cid, setCid] = useState<CID | null>(null);
   const [commP, setCommP] = useState<any | null>(null);
   const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
 
@@ -24,9 +21,7 @@ export const GetFileDealParams = () => {
     if (file) {
       console.log("file", file);
       const carFile = await convertToCAR(file);
-      event.target.value = "";
       setPieceSize(carFile.pieceSize);
-      setCid(carFile.cid);
       setCommP(carFile.commP);
       setIpfsUrl(carFile.ipfsUrl);
 
@@ -37,17 +32,22 @@ export const GetFileDealParams = () => {
   const { writeContract } = useWriteContract();
 
   const handleSubmit = async () => {
-    console.log("pieceSize", pieceSize);
-    console.log("commP", commP);
-    console.log("ipfsUrl", ipfsUrl);
-    console.log("cid", cid);
     if (!pieceSize || !commP || !ipfsUrl) {
       console.error("Missing required data for the offer");
       return;
     }
 
+    console.log("commP", commP);
+    console.log("pieceSize", pieceSize);
+    console.log("ipfsUrl", ipfsUrl);
+    console.log("commP.size", commP.size);
+    console.log("commP.merkleTree", commP.tree as MerkleTree);
+    console.log("commP.tree.root", commP.tree.root);
+
+    const serializedCommP = serializeCommP(commP.size, commP.tree as MerkleTree);
+
     const offer = {
-      commP: commP.bytes as `0x${string}`,
+      commP: serializedCommP as `0x${string}`,
       size: BigInt(pieceSize),
       location: ipfsUrl,
       amount: BigInt(0),
@@ -55,13 +55,12 @@ export const GetFileDealParams = () => {
     };
 
     try {
-      const transaction = writeContract({
+      writeContract({
         address: ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN,
         abi: onRampContractAbi,
         functionName: "offerData",
         args: [offer],
       });
-      console.log("Transaction sent:", transaction);
     } catch (error) {
       console.error("Error sending transaction:", error);
     }
@@ -129,3 +128,12 @@ async function generateCommP(bytes: Uint8Array) {
   const commP = await CommP.build(bytes);
   return commP;
 }
+
+const serializeCommP = (size: number, merkleTree: MerkleTree): `0x${string}` => {
+  const sizeBytes = ethers.utils.hexZeroPad(ethers.utils.hexlify(BigInt(size)), 8);
+
+  const merkleBytes = ethers.utils.arrayify(merkleTree.root);
+
+  const combinedBytes = ethers.utils.concat([sizeBytes, merkleBytes]);
+  return ethers.utils.hexlify(combinedBytes) as `0x${string}`;
+};
