@@ -1,30 +1,44 @@
 "use server";
 
+import { CID } from "multiformats/cid";
+
 async function uploadToIPFS(carChunks: Uint8Array[]) {
   try {
     const carBlob = new Blob(carChunks, { type: "application/car" });
-    const file = new File([carBlob], "file.car", { type: "application/car" });
     const data = new FormData();
-    data.append("file", file);
+    data.append("file", carBlob);
 
+    const pinataMetadata = JSON.stringify({
+      name: "file.car",
+    });
+    data.append("pinataMetadata", pinataMetadata);
+
+    const options = JSON.stringify({
+      cidVersion: 1
+    })
+    data.append("pinataOptions", options)
+
+    console.log("start sending file to ipfs using Pinata");
     const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.PINATA_API_KEY}`,
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_API_KEY}`,
       },
       body: data,
     });
-
-    console.log("res", res);
 
     if (!res.ok) {
       throw new Error(`Failed to upload to IPFS: ${res.statusText}`);
     }
 
     const resData = await res.json();
+    console.log(resData);
+    console.log(CID.parse(resData.IpfsHash).toV1().toString());
 
     if ("IpfsHash" in resData) {
-      return `ipfs://${resData.IpfsHash}`;
+      const cid = resData.IpfsHash;
+      const url = `ipfs://${cid}`;
+      return {cid, url};
     }
 
     throw new Error(`No IPFS hash found in response: ${JSON.stringify(resData)}`);

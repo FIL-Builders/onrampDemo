@@ -629,10 +629,14 @@ export const dealClientAxlAbi = [
   {
     type: 'function',
     inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    name: 'chainIdToDestinationChain',
+    name: 'chainIdToSrcChain',
     outputs: [
       { name: 'chainName', internalType: 'string', type: 'string' },
-      { name: 'destinationAddress', internalType: 'address', type: 'address' },
+      {
+        name: 'oracleContractAddress',
+        internalType: 'address',
+        type: 'address',
+      },
     ],
     stateMutability: 'view',
   },
@@ -719,15 +723,15 @@ export const dealClientAxlAbi = [
   {
     type: 'function',
     inputs: [
-      { name: 'chainIds', internalType: 'uint256[]', type: 'uint256[]' },
-      { name: 'destinationChains', internalType: 'string[]', type: 'string[]' },
+      { name: 'srcChainIds', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: 'srcChainNames', internalType: 'string[]', type: 'string[]' },
       {
-        name: 'destinationAddresses',
+        name: 'srcOracleAddresses',
         internalType: 'address[]',
         type: 'address[]',
       },
     ],
-    name: 'setDestinationChains',
+    name: 'setSourceChains',
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -1225,6 +1229,7 @@ export const onRampContractAbi = [
         components: [
           { name: 'commP', internalType: 'bytes', type: 'bytes' },
           { name: 'size', internalType: 'uint64', type: 'uint64' },
+          { name: 'cid', internalType: 'string', type: 'string' },
           { name: 'location', internalType: 'string', type: 'string' },
           { name: 'amount', internalType: 'uint256', type: 'uint256' },
           { name: 'token', internalType: 'contract IERC20', type: 'address' },
@@ -1296,6 +1301,7 @@ export const onRampContractAbi = [
         components: [
           { name: 'commP', internalType: 'bytes', type: 'bytes' },
           { name: 'size', internalType: 'uint64', type: 'uint64' },
+          { name: 'cid', internalType: 'string', type: 'string' },
           { name: 'location', internalType: 'string', type: 'string' },
           { name: 'amount', internalType: 'uint256', type: 'uint256' },
           { name: 'token', internalType: 'contract IERC20', type: 'address' },
@@ -1313,6 +1319,7 @@ export const onRampContractAbi = [
     outputs: [
       { name: 'commP', internalType: 'bytes', type: 'bytes' },
       { name: 'size', internalType: 'uint64', type: 'uint64' },
+      { name: 'cid', internalType: 'string', type: 'string' },
       { name: 'location', internalType: 'string', type: 'string' },
       { name: 'amount', internalType: 'uint256', type: 'uint256' },
       { name: 'token', internalType: 'contract IERC20', type: 'address' },

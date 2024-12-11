@@ -77,6 +77,7 @@ contract OnRampContract is PODSIVerifier {
     struct Offer {
         bytes commP;
         uint64 size;
+        string cid;
         string location;
         uint256 amount;
         IERC20 token;
@@ -104,11 +105,12 @@ contract OnRampContract is PODSIVerifier {
     }
 
     function offerData(Offer calldata offer) external payable returns (uint64) {
-        require(
-            offer.token.transferFrom(msg.sender, address(this), offer.amount),
-            "Payment transfer failed"
-        );
-
+        if(offer.amount > 0) {
+            require(offer.token.transferFrom(msg.sender, address(this), offer.amount),
+                "Payment transfer failed."
+            );
+        }
+        
         uint64 id = nextOfferId++;
         offers[id] = offer;
 
