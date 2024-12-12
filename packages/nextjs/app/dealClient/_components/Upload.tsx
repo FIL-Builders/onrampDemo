@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { uploadToIPFS } from "./Pinata";
 import { CarWriter } from "@ipld/car";
 import { CommP, MerkleTree } from "@web3-storage/data-segment";
 import { ethers } from "ethers";
@@ -114,8 +115,7 @@ async function convertToCAR(file: File) {
       carChunks.push(chunk);
     }
 
-    const ipfsResp = await uploadFileToIPFS(file);
-    // const ipfsResp = await uploadToIPFS(carChunks);
+    const ipfsResp = await uploadToIPFS(file);
     const ipfsUrl = ipfsResp.url;
     const cidStr = ipfsResp.cid;
     console.log("ipfsURL is: ", ipfsUrl);
@@ -136,53 +136,6 @@ async function generateCID(content: Uint8Array) {
 async function generateCommP(bytes: Uint8Array) {
   const commP = await CommP.build(bytes);
   return commP;
-}
-
-//Testing: if the CID matched the Predetermining CID when upload a file to pinata
-async function uploadFileToIPFS(file: File) {
-  try {
-    const data = new FormData();
-    data.append("file", file);
-
-    const options = JSON.stringify({
-      cidVersion: 1,
-    });
-    data.append("pinataOptions", options);
-
-    const pinataMetadata = JSON.stringify({
-      name: "TestRegularFile",
-    });
-    data.append("pinataMetadata", pinataMetadata);
-
-    console.log("start sending file to ipfs using Pinata");
-    const apiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
-    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: data,
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to upload to IPFS: ${res.statusText}`);
-    }
-
-    const resData = await res.json();
-    console.log(resData);
-    console.log(CID.parse(resData.IpfsHash).toV1().toString());
-
-    if ("IpfsHash" in resData) {
-      const cid = resData.IpfsHash;
-      const url = `ipfs://${cid}`;
-      return { cid, url };
-    }
-
-    throw new Error(`No IPFS hash found in response: ${JSON.stringify(resData)}`);
-  } catch (error) {
-    console.error("Error uploading to IPFS:", error);
-    throw error;
-  }
 }
 
 const serializeCommP = (size: number, merkleTree: MerkleTree): `0x${string}` => {

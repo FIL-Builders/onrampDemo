@@ -2,27 +2,27 @@
 
 import { CID } from "multiformats/cid";
 
-async function uploadToIPFS(carChunks: Uint8Array[]) {
+export async function uploadToIPFS(file: File) {
   try {
-    const carBlob = new Blob(carChunks, { type: "application/car" });
     const data = new FormData();
-    data.append("file", carBlob);
+    data.append("file", file);
+
+    const options = JSON.stringify({
+      cidVersion: 1,
+    });
+    data.append("pinataOptions", options);
 
     const pinataMetadata = JSON.stringify({
-      name: "file.car",
+      name: "TestRegularFile",
     });
     data.append("pinataMetadata", pinataMetadata);
 
-    const options = JSON.stringify({
-      cidVersion: 1
-    })
-    data.append("pinataOptions", options)
-
     console.log("start sending file to ipfs using Pinata");
+    const apiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
     const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: data,
     });
@@ -38,7 +38,7 @@ async function uploadToIPFS(carChunks: Uint8Array[]) {
     if ("IpfsHash" in resData) {
       const cid = resData.IpfsHash;
       const url = `ipfs://${cid}`;
-      return {cid, url};
+      return { cid, url };
     }
 
     throw new Error(`No IPFS hash found in response: ${JSON.stringify(resData)}`);
@@ -47,5 +47,3 @@ async function uploadToIPFS(carChunks: Uint8Array[]) {
     throw error;
   }
 }
-
-export default uploadToIPFS;
