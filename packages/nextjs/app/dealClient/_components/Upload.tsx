@@ -1,9 +1,9 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { CarWriter } from "@ipld/car";
 import { CommP, MerkleTree } from "@web3-storage/data-segment";
 import { ethers } from "ethers";
 import { CID } from "multiformats/cid";
-import * as raw from 'multiformats/codecs/raw'
+import * as raw from "multiformats/codecs/raw";
 import { sha256 } from "multiformats/hashes/sha2";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { onRampContractAbi } from "~~/contracts/generated";
@@ -92,20 +92,19 @@ export const GetFileDealParams = () => {
 
 async function convertToCAR(file: File) {
   try {
-    // const arrayBuffer = await readFileAsArrayBuffer(file);
     const arrayBuffer = await file.arrayBuffer();
     const fileContent = new Uint8Array(arrayBuffer);
 
-    const cid = (await generateCID(fileContent));
-    console.log("V1 cid String is: ",cid.toString());
-    
+    const cid = await generateCID(fileContent);
+    console.log("V1 cid String is: ", cid.toString());
+
     const commP = await generateCommP(fileContent);
-    console.log("commP is: ",commP);
+    console.log("commP is: ", commP);
 
     const pieceSize = commP.pieceSize;
-    console.log("pieceSize is: ",pieceSize);
+    console.log("pieceSize is: ", pieceSize);
 
-    // Generating CAR for the uploaded file 
+    // Generating CAR for the uploaded file
     const { writer, out } = CarWriter.create([cid]);
     writer.put({ cid, bytes: fileContent });
     writer.close();
@@ -119,7 +118,7 @@ async function convertToCAR(file: File) {
     // const ipfsResp = await uploadToIPFS(carChunks);
     const ipfsUrl = ipfsResp.url;
     const cidStr = ipfsResp.cid;
-    console.log("ipfsURL is: ",ipfsUrl);
+    console.log("ipfsURL is: ", ipfsUrl);
 
     return { pieceSize, cidStr, commP, ipfsUrl };
   } catch (error) {
@@ -128,20 +127,10 @@ async function convertToCAR(file: File) {
   }
 }
 
-function readFileAsArrayBuffer(file: File) {
-  return new Promise<ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-}
-
 // Generate a CID using sha256
 async function generateCID(content: Uint8Array) {
-  const bytes = raw.encode(content)
-  const hash = await sha256.digest(bytes);
-  return CID.createV1(raw.code, hash);
+  const hash = await sha256.digest(content);
+  return CID.create(1, raw.code, hash);
 }
 
 async function generateCommP(bytes: Uint8Array) {
@@ -156,8 +145,8 @@ async function uploadFileToIPFS(file: File) {
     data.append("file", file);
 
     const options = JSON.stringify({
-      cidVersion: 1
-    })
+      cidVersion: 1,
+    });
     data.append("pinataOptions", options);
 
     const pinataMetadata = JSON.stringify({
@@ -186,7 +175,7 @@ async function uploadFileToIPFS(file: File) {
     if ("IpfsHash" in resData) {
       const cid = resData.IpfsHash;
       const url = `ipfs://${cid}`;
-      return {cid, url};
+      return { cid, url };
     }
 
     throw new Error(`No IPFS hash found in response: ${JSON.stringify(resData)}`);
