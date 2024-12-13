@@ -2,10 +2,11 @@
 
 import { CID } from "multiformats/cid";
 
-export async function uploadToIPFS(file: File) {
+export async function uploadToIPFS(bytes: Uint8Array[]) {
   try {
+    const carBlob = new Blob(bytes, { type: "application/car" });
     const data = new FormData();
-    data.append("file", file);
+    data.append("file", carBlob);
 
     const options = JSON.stringify({
       cidVersion: 1,

@@ -115,7 +115,7 @@ async function convertToCAR(file: File) {
       carChunks.push(chunk);
     }
 
-    const ipfsResp = await uploadToIPFS(file);
+    const ipfsResp = await uploadToIPFS(carChunks);
     const ipfsUrl = ipfsResp.url;
     const cidStr = ipfsResp.cid;
     console.log("ipfsURL is: ", ipfsUrl);
