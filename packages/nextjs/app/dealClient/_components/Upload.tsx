@@ -3,11 +3,13 @@ import { uploadToIPFS } from "./Pinata";
 import { CarWriter } from "@ipld/car";
 import { CommP, MerkleTree } from "@web3-storage/data-segment";
 import { ethers } from "ethers";
+import { importer } from 'ipfs-unixfs-importer';
+import { base32 } from 'multiformats/bases/base32';
 import { CID } from "multiformats/cid";
-import * as raw from "multiformats/codecs/raw";
-import { sha256 } from "multiformats/hashes/sha2";
+import { create } from "multiformats/hashes/digest";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { onRampContractAbi } from "~~/contracts/generated";
+
 
 const PINATA_CONFIGS = JSON.stringify({
   cidVersion: 1,
@@ -111,6 +113,9 @@ async function uploadFile(file: File) {
 
     const commP = await generateCommP(file);
 
+    if (!cid) {
+      throw new Error("CID is undefined");
+    }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const carChunks = await packToCAR(cid, file);
 
@@ -124,10 +129,43 @@ async function uploadFile(file: File) {
 }
 
 // Generate a CID using sha256
-async function generateCID(file: File) {
-  const content = new Uint8Array(await file.arrayBuffer());
-  const hash = await sha256.digest(content);
-  return CID.create(1, raw.code, hash);
+async function generateCID(file: File): Promise<CID> {
+  try {
+    const blockstore = {
+      store: new Map<string, Uint8Array>(),
+      async put(cid: CID, bytes: Uint8Array) {
+        this.store.set(cid.toString(), bytes);
+        return cid;
+      },
+      async get(cid: CID) {
+        return this.store.get(cid.toString());
+      },
+    };
+
+    const options = {
+      maxChunkSize: 262144, // 256 KB chunk size
+      rawLeaves: true, // Use DAG-PB encoding (not raw leaves)
+    };
+
+    const fileContents = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(fileContents);
+
+    const source = [{ content: uint8Array }]; // Use Uint8Array instead of ReadableStream
+
+    for await (const file of importer(source, blockstore, options)) {
+      console.log("Generated CID:", file.cid.toString(base32));
+      return file.cid;
+    }
+
+    throw new Error("No CID was generated for the file.");
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error replicating IPFS add:", error.message);
+    } else {
+      console.error("Unknown error replicating IPFS add");
+    }
+    throw error; // Re-throw the error to handle it in the calling function
+  }
 }
 
 async function generateCommP(file: File) {
