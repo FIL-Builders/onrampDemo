@@ -39,10 +39,11 @@ export const GetFileDealParams = () => {
 
   const handleSubmit = async () => {
     if (!pieceSize || !commP || !ipfsUrl || !cidStr) {
-      console.error("Missing required data for the offer");
+      console.error("Missing required data for the offer: ", { pieceSize, commP, ipfsUrl, cidStr });
       return;
     }
 
+    console.log("cidStr", cidStr);
     console.log("commP", commP);
     console.log("pieceSize", pieceSize);
     console.log("ipfsUrl", ipfsUrl);
@@ -115,7 +116,7 @@ async function convertToCAR(file: File) {
       carChunks.push(chunk);
     }
 
-    const ipfsResp = await uploadToIPFS(carChunks);
+    const ipfsResp = await uploadToIPFS(fileContent, file.type);
     const ipfsUrl = ipfsResp.url;
     const cidStr = ipfsResp.cid;
     console.log("ipfsURL is: ", ipfsUrl);
