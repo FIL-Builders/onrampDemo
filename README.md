@@ -1,14 +1,14 @@
-# Filecoin Onrammp contract demo
+# Filecoin Onramp Contract Demo
 
-This MVP is built using Fil-Frame, and it demonstrates how to onboard data to Filecoin via a onchain data onramp contracts integreate with Lighthouse deal engine to process storage on Filecoin. 
+This MVP is built using [fil-frame](https://github.com/FIL-Builders/fil-frame), and it demonstrates how to onboard data to Filecoin via a onchain data onramp contracts integreate with Lighthouse deal engine to process storage on Filecoin. 
 
 It will potentially integreate with multichain data bridge which process the data storage coming from multichain, such as Linea, Avalance, Base, Arbitrum, etc.
 
 The MVP consists of the following componenet:
-- **Demo UI**: upload file via onramp contract
-- **Onramp Contracts**: accepting storage requests & posdi proof verification.
-- **xClientClient**: listen to the storage requests from smart contract, and dealing with Lighthouse Deal Engine for storage and proofing.
-- **Lighthouse Deal Engine**: data aggregation and Filecoin storage.
+- **[Demo UI](https://github.com/FIL-Builders/onrampDemo/tree/main/packages/nextjs)**: upload file via onramp contract
+- **[Onramp Contracts](https://github.com/FIL-Builders/onramp-contracts/)**: accepting storage requests & posdi proof verification.
+- **[xClientClient](https://github.com/FIL-Builders/xchainClient)**: listen to the storage requests from smart contract, and dealing with Lighthouse Deal Engine for storage and proofing.
+- **[Lighthouse](https://www.lighthouse.storage/) Deal Engine**: data aggregation and Filecoin storage.
 
 ### Getting started
 
