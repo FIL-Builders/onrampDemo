@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { uploadToIPFS } from "./Pinata";
 import { CarWriter } from "@ipld/car";
-import { CommP, MerkleTree } from "@web3-storage/data-segment";
-import { ethers } from "ethers";
+import { CommP } from "@web3-storage/data-segment";
 import { importer } from 'ipfs-unixfs-importer';
 import { base32 } from 'multiformats/bases/base32';
 import { CID } from "multiformats/cid";
-import { create } from "multiformats/hashes/digest";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { onRampContractAbi } from "~~/contracts/generated";
 
@@ -30,7 +28,7 @@ export const GetFileDealParams = () => {
       console.log("file", file);
       const uploadedFile = await uploadFile(file);
       setPieceSize(uploadedFile.pieceSize);
-      setCommP(uploadedFile.commP);
+      setCommP(uploadedFile.pieceCID);
       setIpfsUrl(uploadedFile.ipfsUrl);
       setCid(uploadedFile.cid);
       console.log("File uploaded successfully, params are: ", uploadedFile);
@@ -54,14 +52,9 @@ export const GetFileDealParams = () => {
     console.log("IPFS commP is:", commP);
     console.log("pieceSize", pieceSize);
     console.log("ipfsUrl", ipfsUrl);
-    console.log("commP.size", commP.size);
-    console.log("commP.merkleTree", commP.tree as MerkleTree);
-    console.log("commP.tree.root", commP.tree.root);
-
-    const serializedCommP = serializeCommP(commP.size, commP.tree as MerkleTree);
 
     const offer = {
-      commP: serializedCommP as `0x${string}`,
+      commP: commP,
       size: BigInt(pieceSize),
       cid: cid,
       location: ipfsUrl,
@@ -111,7 +104,7 @@ async function uploadFile(file: File) {
 
     const cid = await generateCID(file);
 
-    const commP = await generateCommP(file);
+    const { commPCID, pieceSize } = await generateCommP(file);
 
     if (!cid) {
       throw new Error("CID is undefined");
@@ -119,9 +112,7 @@ async function uploadFile(file: File) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const carChunks = await packToCAR(cid, file);
 
-    const pieceSize = commP.pieceSize;
-
-    return { pieceSize, cid: cid.toString(), commP, ipfsUrl: ipfsURL };
+    return { pieceSize, cid: cid.toString(), pieceCID: commPCID, ipfsUrl: ipfsURL };
   } catch (error) {
     console.error("Error creating CAR file:", error);
     throw error;
@@ -171,17 +162,10 @@ async function generateCID(file: File): Promise<CID> {
 async function generateCommP(file: File) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const commP = await CommP.build(bytes);
-  return commP;
+  const commPCID = commP.link().toString();
+  console.log("commPCID", commPCID);
+  return { commPCID, pieceSize: commP.pieceSize };
 }
-
-const serializeCommP = (size: number, merkleTree: MerkleTree): `0x${string}` => {
-  const sizeBytes = ethers.utils.hexZeroPad(ethers.utils.hexlify(BigInt(size)), 8);
-
-  const merkleBytes = ethers.utils.arrayify(merkleTree.root);
-
-  const combinedBytes = ethers.utils.concat([sizeBytes, merkleBytes]);
-  return ethers.utils.hexlify(combinedBytes) as `0x${string}`;
-};
 
 const packToCAR = async (cid: CID, file: File) => {
   // Generating CAR for the uploaded file
