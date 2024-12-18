@@ -18,7 +18,7 @@ const WETH_ADDRESS = "0xb44cc5FB8CfEdE63ce1758CE0CDe0958A7702a16";
 
 export const GetFileDealParams = () => {
   const [pieceSize, setPieceSize] = useState<number | null>(null);
-  const [commP, setCommP] = useState<any | null>(null);
+  const [pieceCID, setPieceCID] = useState<any | null>(null);
   const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
   const [cid, setCid] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ export const GetFileDealParams = () => {
       console.log("file", file);
       const uploadedFile = await uploadFile(file);
       setPieceSize(uploadedFile.pieceSize);
-      setCommP(uploadedFile.pieceCID);
+      setPieceCID(uploadedFile.pieceCID);
       setIpfsUrl(uploadedFile.ipfsUrl);
       setCid(uploadedFile.cid);
       console.log("File uploaded successfully, params are: ", uploadedFile);
@@ -43,18 +43,19 @@ export const GetFileDealParams = () => {
   });
 
   const handleSubmit = async () => {
-    if (!pieceSize || !commP || !ipfsUrl || !cid) {
-      console.error("Missing required data for the offer:", { pieceSize, commP, ipfsUrl, cid });
+    if (!pieceSize || !pieceCID || !ipfsUrl || !cid) {
+      console.error("Missing required data for the offer:", { pieceSize, pieceCID, ipfsUrl, cid });
       return;
     }
 
     console.log("IPFS CID is:", cid);
-    console.log("IPFS commP is:", commP);
+    console.log("pieceCID is:", pieceCID.toString());
+    console.log("PieceCID in bytes :", pieceCID.bytes);
     console.log("pieceSize", pieceSize);
     console.log("ipfsUrl", ipfsUrl);
 
     const offer = {
-      commP: commP,
+      commP: pieceCID.bytes,
       size: BigInt(pieceSize),
       cid: cid,
       location: ipfsUrl,
@@ -104,13 +105,14 @@ async function uploadFile(file: File) {
 
     const cid = await generateCID(file);
 
-    const { commPCID, pieceSize } = await generateCommP(file);
+    const commP = await generateCommP(file);
+    console.log("commp is ", commP.toJSON());
+    const pieceSize = commP.pieceSize;
+    const commPCID = commP.link();
 
     if (!cid) {
       throw new Error("CID is undefined");
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const carChunks = await packToCAR(cid, file);
 
     return { pieceSize, cid: cid.toString(), pieceCID: commPCID, ipfsUrl: ipfsURL };
   } catch (error) {
@@ -162,22 +164,5 @@ async function generateCID(file: File): Promise<CID> {
 async function generateCommP(file: File) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const commP = await CommP.build(bytes);
-  const commPCID = commP.link().toString();
-  console.log("commPCID", commPCID);
-  return { commPCID, pieceSize: commP.pieceSize };
+  return commP;
 }
-
-const packToCAR = async (cid: CID, file: File) => {
-  // Generating CAR for the uploaded file
-  const { writer, out } = CarWriter.create([cid]);
-  const fileBytes = new Uint8Array(await file.arrayBuffer());
-  writer.put({ cid, bytes: fileBytes });
-  writer.close();
-
-  const carChunks: Uint8Array[] = [];
-  for await (const chunk of out) {
-    carChunks.push(chunk);
-  }
-
-  return carChunks;
-};
