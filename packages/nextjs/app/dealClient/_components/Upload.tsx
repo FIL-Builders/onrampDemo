@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { uploadToIPFS } from "./Pinata";
-import { CarWriter } from "@ipld/car";
+import { ethers } from "ethers";
 import { CommP } from "@web3-storage/data-segment";
 import { importer } from 'ipfs-unixfs-importer';
 import { base32 } from 'multiformats/bases/base32';
@@ -25,7 +25,6 @@ export const GetFileDealParams = () => {
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      console.log("file", file);
       const uploadedFile = await uploadFile(file);
       setPieceSize(uploadedFile.pieceSize);
       setPieceCID(uploadedFile.pieceCID);
@@ -50,12 +49,13 @@ export const GetFileDealParams = () => {
 
     console.log("IPFS CID is:", cid);
     console.log("pieceCID is:", pieceCID.toString());
-    console.log("PieceCID in bytes :", pieceCID.bytes);
     console.log("pieceSize", pieceSize);
     console.log("ipfsUrl", ipfsUrl);
 
+    const pieceCidBytes = ethers.utils.hexlify(pieceCID.bytes);
+
     const offer = {
-      commP: pieceCID.bytes,
+      commP: pieceCidBytes as `0x${string}`,
       size: BigInt(pieceSize),
       cid: cid,
       location: ipfsUrl,
@@ -106,7 +106,6 @@ async function uploadFile(file: File) {
     const cid = await generateCID(file);
 
     const commP = await generateCommP(file);
-    console.log("commp is ", commP.toJSON());
     const pieceSize = commP.pieceSize;
     const commPCID = commP.link();
 
