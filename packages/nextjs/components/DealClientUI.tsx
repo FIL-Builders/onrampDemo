@@ -3,7 +3,7 @@
 // @refresh reset
 import { useReducer } from "react";
 import DealsGalery from "./DealsGalery";
-import { ContractVariables } from "~~/app/debug/_components/contract/ContractVariables";
+import { ContractVariables } from "./contract/ContractVariables";
 import { Address, Balance } from "~~/components/fil-frame";
 import { useDeployedContractInfo, useNetworkColor } from "~~/hooks/fil-frame";
 import { useTargetNetwork } from "~~/hooks/fil-frame/useTargetNetwork";

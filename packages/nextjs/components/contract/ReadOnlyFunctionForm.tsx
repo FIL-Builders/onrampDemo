@@ -12,7 +12,7 @@ import {
   getInitialFormState,
   getParsedContractFunctionArgs,
   transformAbiFunction,
-} from "~~/app/debug/_components/contract";
+} from "./";
 import { useTargetNetwork } from "~~/hooks/fil-frame/useTargetNetwork";
 import { getParsedError, notification } from "~~/utils/fil-frame";
 
