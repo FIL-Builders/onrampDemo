@@ -17,7 +17,7 @@ type HeaderMenuLink = {
 
 export const menuLinks: HeaderMenuLink[] = [
   {
-    label: "Onramp Contract",
+    label: "Data Onramp PoC",
     href: "/",
   },
 ];

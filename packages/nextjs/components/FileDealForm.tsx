@@ -19,7 +19,7 @@ export const FileDealForm = () => {
 
   return (
     <div className="flex flex-col items-center space-y-4 p-5 w-full bg-base-100 border-base-300 border shadow-md shadow-secondary rounded-3xl px-6 lg:px-8 mb-6  py-4">
-      <h2 className="text-2xl font-bold">Create a Filecoin Deal</h2>
+      <h2 className="text-2xl font-bold">Store Data on Filecoin</h2>
       <GetFileDealParams />
       {dealParams && DealClientAddress && (
         <WriteContractFunctionForm

@@ -17,12 +17,15 @@ const ONRAMP_CONTRACT_ADDRESS_SRC_CHAIN = "0xACd64568CDDdF173d65ED6d3B304ad17E98
 const WETH_ADDRESS = "0xb44cc5FB8CfEdE63ce1758CE0CDe0958A7702a16";
 
 export const GetFileDealParams = () => {
+  const [isUploading, setIsUploading] = useState(false);
   const [pieceSize, setPieceSize] = useState<number | null>(null);
   const [pieceCID, setPieceCID] = useState<any | null>(null);
   const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
   const [cid, setCid] = useState<string | null>(null);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUploading(true);
+
     const file = event.target.files?.[0];
     if (file) {
       const uploadedFile = await uploadFile(file);
@@ -32,8 +35,10 @@ export const GetFileDealParams = () => {
       setCid(uploadedFile.cid);
       console.log("File uploaded successfully, params are: ", uploadedFile);
 
+      setIsUploading(false);
       return uploadedFile;
     }
+    setIsUploading(false);
   };
 
   const { data: hash, isPending, writeContract } = useWriteContract();
@@ -83,11 +88,11 @@ export const GetFileDealParams = () => {
         accept={"*"}
         className="file-input border-base-300 border shadow-md shadow-secondary rounded-3xl"
       />
-      <button onClick={handleSubmit}>Submit</button>
+      <button onClick={handleSubmit} disabled={isUploading}>{isUploading ? "Uploading..." : "Summit"}</button>
       {isPending && <div>Transaction pending...</div>}
       {isConfirming && <div>Confirming transaction...</div>}
       {isConfirmed && <div>Transaction confirmed!</div>}
-      {hash && <div>Transaction hash: {hash}</div>}
+      {isConfirmed && hash && <div>Transaction hash: {hash}</div>}
     </>
   );
 };

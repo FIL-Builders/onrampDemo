@@ -19,6 +19,26 @@ const Home: NextPage = () => {
         </div>
       </div>
       <DealClientContracts />
+      <div className="flex justify-center items-center space-x-2 flex-col sm:flex-row">
+        Demo built on &nbsp;
+        <a 
+            href="https://github.com/FIL-Builders/onramp-contracts/tree/dev/LH" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="hover:underline"
+          >
+          Multichain Data Bridge
+        </a>
+        &nbsp;&
+        <a 
+            href="https://www.lighthouse.storage/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="hover:underline"
+          >
+          LHProtocol
+        </a>
+    </div>
     </>
   );
 };
